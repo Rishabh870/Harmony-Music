@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:harmonymusic/services/import_audio_csv.dart';
 import 'package:harmonymusic/utils/helper.dart';
 import 'package:harmonymusic/utils/lang_mapping.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -626,6 +627,29 @@ class SettingsScreen extends StatelessWidget {
                           () => Get.delete<RestoreDialogController>()),
                     ),
                   ]),
+              CustomExpansionTile(
+                title: "Import Library".tr,
+                icon: Icons.music_note,
+                children: [
+                  ListTile(
+                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                    title: Text("From Spotify".tr), // Add translation key here
+                    subtitle: Text(
+                        "Export your Spotify playlists and favorites as a CSV using TuneMyMusic, then import them here. Doesn't work for albums and artists"
+                            .tr,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium), // Add description
+                    onTap: () async {
+                      try {
+                        await importMusicFromTuneMyMusic(context);
+                      } catch (e) {
+                        printERROR(e);
+                      }
+                    },
+                  ),
+                ],
+              ),
               CustomExpansionTile(
                   icon: Icons.miscellaneous_services,
                   title: "misc".tr,

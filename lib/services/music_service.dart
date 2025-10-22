@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:convert';
+import 'dart:developer';
 import 'package:audio_service/audio_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' as getx;
@@ -530,6 +531,8 @@ class MusicServices extends getx.GetxService {
     data['context']['client']["hl"] = 'en';
     data['query'] = query;
 
+    log('$query, $filter, $scope');
+
     final Map<String, dynamic> searchResults = {};
     final filters = [
       'albums',
@@ -908,6 +911,55 @@ class MusicServices extends getx.GetxService {
       return year;
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<MediaItem?> searchFirstSongMatch(String query) async {
+    try {
+      final data = Map.of(_context);
+      data['context']['client']["hl"] = 'en';
+      data['query'] = query;
+      data['params'] = getSearchParams('songs', null, false);
+
+      final response = (await _sendRequest("search", data)).data;
+
+      if (response['contents'] == null) return null;
+
+      dynamic results = nav(response, [
+        'contents',
+        'tabbedSearchResultsRenderer',
+        'tabs',
+        0,
+        'tabRenderer',
+        'content'
+      ]);
+
+      results = nav(results, ['sectionListRenderer', 'contents']);
+
+      if (results == null || results.isEmpty) return null;
+
+      for (var res in results) {
+        if (res['musicShelfRenderer'] == null) continue;
+
+        final contents = res['musicShelfRenderer']['contents'];
+        if (contents == null || contents.isEmpty) continue;
+
+        final parsedResults = parseSearchResults(
+          contents,
+          ['artist', 'playlist', 'song', 'video', 'station'],
+          'song',
+          'Songs',
+        );
+
+        if (parsedResults != null && parsedResults.isNotEmpty) {
+          return parsedResults[0]; // ✅ Return the first song
+        }
+      }
+
+      return null;
+    } catch (e) {
+      print("Search failed for query: $query\nError: $e");
+      return null;
     }
   }
 

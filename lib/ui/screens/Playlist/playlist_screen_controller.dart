@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:harmonymusic/models/thumbnail.dart';
+import 'package:harmonymusic/services/import_audio_csv.dart';
 import 'package:harmonymusic/services/permission_service.dart';
 import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:harmonymusic/ui/widgets/snackbar.dart';
@@ -60,8 +61,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     _scaleAnimation =
         Tween<double>(begin: 0, end: 1.0).animate(animationController);
 
-    _heightAnimation =
-        Tween<double>(begin: 10.0, end: 75.0).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutBack));
+    _heightAnimation = Tween<double>(begin: 10.0, end: 75.0).animate(
+        CurvedAnimation(
+            parent: animationController, curve: Curves.easeOutBack));
 
     final args = Get.arguments as List;
     final Playlist? playlist = args[0];
@@ -146,10 +148,13 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
   @override
   void syncPlaylistSongs() {
-    _fetchSongOnline(playlist.value.playlistId, false, false).then((value) {
-      updateSongsIntoDb();
-      isContentFetched.value = true;
-    });
+    if (playlist.value.playlistId == 'LocalSongs') {
+    } else {
+      _fetchSongOnline(playlist.value.playlistId, false, false).then((value) {
+        updateSongsIntoDb();
+        isContentFetched.value = true;
+      });
+    }
   }
 
   @override
@@ -258,7 +263,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   }
 
   @override
-  void fetchAlbumDetails(Album? album_,String albumId) {} // Not used in this class
+  void fetchAlbumDetails(
+      Album? album_, String albumId) {} // Not used in this class
 
   /// This function updates the local playlist thumbnail based on the first song's thumbnail
   void _updatePlaylistThumbSongBased() {
@@ -372,7 +378,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       }
 
       printERROR("Error exporting playlist: $e");
-      
+
       String errorMsg = "exportError".tr;
       if (e is FileSystemException) {
         if (e.osError?.errorCode == 13) {
@@ -463,7 +469,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       }
 
       printERROR("Error exporting playlist to CSV: $e");
-      
+
       String errorMsg = "exportError".tr;
       if (e is FileSystemException) {
         if (e.osError?.errorCode == 13) {
@@ -487,58 +493,64 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
   String _generateCsvContent() {
     final buffer = StringBuffer();
-    
+
     // CSV Header
-    buffer.writeln('PlaylistBrowseId,PlaylistName,MediaId,Title,Artists,Duration,ThumbnailUrl,AlbumId,AlbumTitle,ArtistIds');
-    
+    buffer.writeln(
+        'PlaylistBrowseId,PlaylistName,MediaId,Title,Artists,Duration,ThumbnailUrl,AlbumId,AlbumTitle,ArtistIds');
+
     // CSV Rows - one for each song
     for (final song in songList) {
       // Keep playlistBrowseId blank for offline/piped playlists
-      final playlistBrowseId = (!playlist.value.isCloudPlaylist || playlist.value.isPipedPlaylist)
-          ? ''
-          : _escapeCsvField(playlist.value.playlistId);
+      final playlistBrowseId =
+          (!playlist.value.isCloudPlaylist || playlist.value.isPipedPlaylist)
+              ? ''
+              : _escapeCsvField(playlist.value.playlistId);
       final playlistName = _escapeCsvField(playlist.value.title);
       final mediaId = _escapeCsvField(song.id);
       final title = _escapeCsvField(song.title);
-      
+
       // Extract artists as comma-separated string
       final artistsList = song.extras?['artists'] as List?;
       final artists = artistsList != null
           ? _escapeCsvField(artistsList.map((a) => a['name']).join(', '))
           : '';
-      
+
       // Format duration as HH:MM:SS or MM:SS
-      final duration = song.duration != null
-          ? _formatDuration(song.duration!)
-          : '';
-      
+      final duration =
+          song.duration != null ? _formatDuration(song.duration!) : '';
+
       final thumbnailUrl = _escapeCsvField(song.artUri.toString());
-      
+
       // Extract album information
       final albumData = song.extras?['album'] as Map?;
-      final albumId = albumData != null ? _escapeCsvField(albumData['id'] ?? '') : '';
-      final albumTitle = albumData != null ? _escapeCsvField(albumData['name'] ?? '') : '';
-      
+      final albumId =
+          albumData != null ? _escapeCsvField(albumData['id'] ?? '') : '';
+      final albumTitle =
+          albumData != null ? _escapeCsvField(albumData['name'] ?? '') : '';
+
       // Extract all artist IDs (comma-separated)
       final artistIds = artistsList != null && artistsList.isNotEmpty
           ? _escapeCsvField(artistsList.map((a) => a['id'] ?? '').join(','))
           : '';
-      
-      buffer.writeln('$playlistBrowseId,$playlistName,$mediaId,$title,$artists,$duration,$thumbnailUrl,$albumId,$albumTitle,$artistIds');
+
+      buffer.writeln(
+          '$playlistBrowseId,$playlistName,$mediaId,$title,$artists,$duration,$thumbnailUrl,$albumId,$albumTitle,$artistIds');
     }
-    
+
     return buffer.toString();
   }
 
   String _escapeCsvField(String field) {
     // Escape double quotes by doubling them
     String escaped = field.replaceAll('"', '""');
-    
+
     // If field contains comma, newline, or double quote, wrap in quotes
-    if (escaped.contains(',') || escaped.contains('\n') || escaped.contains('"')) {
+    if (escaped.contains(',') ||
+        escaped.contains('\n') ||
+        escaped.contains('"')) {
       escaped = '"$escaped"';
     }
-    
+
     return escaped;
   }
 
@@ -546,7 +558,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final seconds = duration.inSeconds.remainder(60);
-    
+
     if (hours > 0) {
       return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     } else {

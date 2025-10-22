@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:on_audio_query_forked/on_audio_query.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../screens/Settings/settings_screen_controller.dart';
@@ -50,8 +52,11 @@ class ImageWidget extends StatelessWidget {
     //                 : "";
 
     /// only valid for offline songs
-    final bool offlineAvailable =
+    final bool isSystemLocalMusic = song?.extras?["source"] == "local";
+    final bool isAppDownloadedMusic =
         song != null && (song?.extras?["url"] ?? "").contains("file");
+
+    final bool offlineAvailable = isSystemLocalMusic || isAppDownloadedMusic;
 
     return Container(
       height: size,
@@ -62,13 +67,33 @@ class ImageWidget extends StatelessWidget {
         borderRadius: artist != null ? null : BorderRadius.circular(5),
       ),
       child: offlineAvailable
-          ? Image.file(
-              File(
-                  "${Get.find<SettingsScreenController>().supportDirPath}/thumbnails/${song!.id}.png"),
-              height: size,
-              width: size,
-              fit: BoxFit.cover,
-            )
+          ? isAppDownloadedMusic
+              ? Image.file(
+                  File(
+                    "${Get.find<SettingsScreenController>().supportDirPath}/thumbnails/${song!.id}.png",
+                  ),
+                  height: size,
+                  width: size,
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, err, stack) => Icon(Icons.music_note),
+                )
+              : FutureBuilder<Uint8List?>(
+                  future: OnAudioQuery()
+                      .queryArtwork(song!.extras?["artId"], ArtworkType.AUDIO),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.data != null) {
+                      return Image.memory(
+                        snapshot.data!,
+                        height: size,
+                        width: size,
+                        fit: BoxFit.cover,
+                      );
+                    } else {
+                      return Icon(Icons.music_note);
+                    }
+                  },
+                )
           : CachedNetworkImage(
               height: size,
               width: size,

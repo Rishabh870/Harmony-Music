@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:harmonymusic/services/import_audio_csv.dart';
 import 'package:harmonymusic/ui/widgets/snackbar.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,6 +37,9 @@ class LibrarySongsController extends GetxController {
     // Make sure that song cached in system or not cleared by system
     // if cleared then it will remove from database as well
     List<String> songsList = [];
+
+    loadLocalLibrarySongs();
+
     final cacheDir = (await getTemporaryDirectory()).path;
     if (Directory("$cacheDir/cachedSongs/").existsSync()) {
       final downloadedFiles = Directory("$cacheDir/cachedSongs")
@@ -125,6 +129,12 @@ class LibrarySongsController extends GetxController {
     if (await thumbFile.exists()) {
       await thumbFile.delete();
     }
+  }
+
+  Future<void> loadLocalLibrarySongs() async {
+    final mediaItems = await fetchLocalSongsAsMediaItems();
+    librarySongsList.addAll(mediaItems);
+    isSongFetched.value = true;
   }
 
 //Additional operations

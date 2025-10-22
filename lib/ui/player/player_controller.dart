@@ -287,8 +287,7 @@ class PlayerController extends GetxController
   void _listenForCustomEvents() {
     _audioHandler.customEvent.listen((event) {
       if (event['eventType'] == 'playFromMediaId') {
-        _playViaAndroidAuto(
-            event['songId'], event['libraryId']);
+        _playViaAndroidAuto(event['songId'], event['libraryId']);
       }
     });
   }
@@ -424,8 +423,7 @@ class PlayerController extends GetxController
     _audioHandler.addQueueItems(listToEnqueue);
   }
 
-  void _playViaAndroidAuto(
-      String songId, String libraryId) {
+  void _playViaAndroidAuto(String songId, String libraryId) {
     Hive.openBox(libraryId).then((box) {
       List<MediaItem> songList = [];
       final songJson = box.values.toList();

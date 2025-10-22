@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 
-
 import 'package:hive/hive.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
@@ -444,7 +443,6 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   @override
   Future<void> customAction(String name, [Map<String, dynamic>? extras]) async {
     switch (name) {
-
       case 'dispose':
         await _player.dispose();
         super.stop();
@@ -455,8 +453,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         currentIndex = songIndex;
         final isNewUrlReq = extras['newUrl'] ?? false;
         final currentSong = queue.value[currentIndex];
-        final futureStreamInfo =
-            checkNGetUrl(currentSong.id, generateNewUrl: isNewUrlReq);
+        String? source = currentSong.extras?["source"];
+        final futureStreamInfo = checkNGetUrl(currentSong.id,
+            generateNewUrl: isNewUrlReq, source: source);
         final bool restoreSession = extras['restoreSession'] ?? false;
         isSongLoading = true;
         playbackState.add(playbackState.value
@@ -466,6 +465,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         }
 
         mediaItem.add(currentSong);
+
         final streamInfo = await futureStreamInfo;
         if (songIndex != currentIndex) {
           return;
@@ -774,8 +774,11 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
 // Work around used [useNewInstanceOfExplode = false] to Fix Connection closed before full header was received issue
   Future<HMStreamingData> checkNGetUrl(String songId,
-      {bool generateNewUrl = false, bool offlineReplacementUrl = false}) async {
+      {bool generateNewUrl = false,
+      bool offlineReplacementUrl = false,
+      String? source = ""}) async {
     printINFO("Requested id : $songId");
+
     final songDownloadsBox = Hive.box("SongDownloads");
     if (!offlineReplacementUrl &&
         (await Hive.openBox("SongsCache")).containsKey(songId)) {
@@ -837,6 +840,23 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       }
       //in case file doesnot found in storage, song will be played online
       return checkNGetUrl(songId, offlineReplacementUrl: true);
+    } else if (source == 'local') {
+      Audio? localAudio = Audio(
+          itag: 140,
+          audioCodec: Codec.mp4a,
+          bitrate: 0,
+          duration: 0,
+          loudnessDb: 0,
+          url: songId,
+          size: 0);
+
+      final streamInfo = HMStreamingData(
+          playable: true,
+          statusMSG: "OK",
+          highQualityAudio: localAudio,
+          lowQualityAudio: localAudio);
+
+      return streamInfo;
     } else {
       //check if song stream url is cached and allocate url accordingly
       final songsUrlCacheBox = Hive.box("SongsUrlCache");
@@ -868,7 +888,6 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 class UrlError extends Error {
   String message() => 'Unable to fetch url';
 }
-
 
 // for Android Auto
 class MediaLibrary {
