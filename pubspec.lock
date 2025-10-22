@@ -673,22 +673,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  on_audio_query_android_v1_8:
-    dependency: transitive
-    description:
-      name: on_audio_query_android_v1_8
-      sha256: b50d4863cecd674b15146523181b39b0abb33fc1b61d13a42ec235a99fe219b0
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.1"
-  on_audio_query_forked:
+  on_audio_query:
     dependency: "direct main"
     description:
-      name: on_audio_query_forked
-      sha256: d3326e33ba8938b513954f9045f7430790418a81844a32db044803e70a4cc986
+      name: on_audio_query
+      sha256: "28d7a247f8a0580b5d1befba15c8d8fd7e1cf3cd8e0449d54a66fc2ef27adf10"
       url: "https://pub.dev"
     source: hosted
-    version: "2.9.1"
+    version: "2.9.0"
+  on_audio_query_android:
+    dependency: transitive
+    description:
+      name: on_audio_query_android
+      sha256: c0b946011ee7aa8ec76b21837f0cb0007120ac291202ed6c6fb4c498ba2ff6fe
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   on_audio_query_ios:
     dependency: transitive
     description:

@@ -46,7 +46,6 @@ class MyApp extends StatelessWidget {
         title: 'Harmony Music',
         home: const Home(),
         debugShowCheckedModeBanner: false,
-        translations: Languages(),
         locale:
             Locale(Hive.box("AppPrefs").get('currentAppLanguageCode') ?? "en"),
         fallbackLocale: const Locale("en"),
