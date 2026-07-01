@@ -160,11 +160,13 @@ class MusicServices extends getx.GetxService {
     return home;
   }
 
-  Future<List<Map<String, dynamic>>> getCharts({String? countryCode}) async {
+  Future<List<Map<String, dynamic>>> getCharts(String catogory,
+      {String? countryCode}) async {
     final List<Map<String, dynamic>> charts = [];
     final data = Map.from(_context);
 
     data['browseId'] = 'FEmusic_charts';
+    data['context']['client']["hl"] = 'en';
     if (countryCode != null) {
       data['formData'] = {
         'selectedValues': [countryCode]
@@ -174,10 +176,36 @@ class MusicServices extends getx.GetxService {
     final results = nav(response, single_column_tab + section_list);
     results.removeAt(0);
     for (dynamic result in results) {
-      charts.add(parseChartsItem(result));
+      if (nav(result, [
+            "musicCarouselShelfRenderer",
+            "header",
+            "musicCarouselShelfBasicHeaderRenderer",
+            ...title_text
+          ]) ==
+          "Video charts") {
+        for (dynamic item in result['musicCarouselShelfRenderer']['contents']) {
+          final chartItem =
+              await getChartItems(parseChartsItemBrowseId(item), catogory);
+          charts.add(chartItem);
+        }
+      } else {
+        continue;
+      }
     }
 
     return charts;
+  }
+
+  Future<Map<String, dynamic>> getChartItems(
+      Map<String, dynamic> item, String catogory) async {
+    final catString = catogory == "TMV" ? "Top Music Videos" : "Trending";
+    if ((item['title'])!.contains(catString)) {
+      final songs = (await getPlaylistOrAlbumSongs(
+          playlistId: item['browseId']))['tracks'];
+      final limitedSongs = songs.length > 24 ? songs.sublist(0, 24) : songs;
+      return {'title': item['title'], 'contents': limitedSongs};
+    }
+    return {'title': item['title'], 'contents': []};
   }
 
   Future<Map<String, dynamic>> getWatchPlaylist(

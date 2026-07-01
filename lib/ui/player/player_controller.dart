@@ -12,6 +12,7 @@ import '../screens/Playlist/playlist_screen_controller.dart';
 import '../widgets/snackbar.dart';
 import '/services/synced_lyrics_service.dart';
 import '/ui/screens/Settings/settings_screen_controller.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/windows_audio_service.dart';
 import '../../utils/helper.dart';
 import '/models/media_Item_builder.dart';
@@ -73,6 +74,9 @@ class PlayerController extends GetxController
   final GlobalKey<ScaffoldState> homeScaffoldkey = GlobalKey<ScaffoldState>();
 
   final buttonState = PlayButtonState.paused.obs;
+
+  // track whether wakelock is currently enabled to avoid repeated calls
+  bool _wakelockActive = false;
 
   var _newSongFlag = true;
   final isCurrentSongBuffered = false.obs;
@@ -178,7 +182,30 @@ class PlayerController extends GetxController
         _audioHandler.seek(Duration.zero);
         _audioHandler.pause();
       }
+
+      final settings = Get.find<SettingsScreenController>();
+      // Keep the screen awake whenever playback is active and the setting is enabled.
+      final shouldEnable = settings.keepScreenAwake.isTrue && isPlaying;
+      _setWakelock(shouldEnable);
     });
+  }
+
+  void _setWakelock(bool enable) {
+    if (_wakelockActive == enable) return; // no-op if already in desired state
+
+    try {
+      if (enable) {
+        printINFO("Enabling wakelock");
+        WakelockPlus.enable();
+        _wakelockActive = true;
+      } else {
+        printINFO("Disabling wakelock");
+        WakelockPlus.disable();
+        _wakelockActive = false;
+      }
+    } catch (e) {
+      printERROR(e);
+    }
   }
 
   void _listenForChangesInPosition() {
@@ -796,6 +823,12 @@ class PlayerController extends GetxController
     sleepTimer?.cancel();
     if (GetPlatform.isWindows) {
       Get.delete<WindowsAudioService>();
+    }
+    // ensure wakelock disabled when player controller disposed
+    try {
+      _setWakelock(false);
+    } catch (e) {
+      printERROR(e);
     }
     super.dispose();
   }

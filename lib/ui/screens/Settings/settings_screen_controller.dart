@@ -17,6 +17,7 @@ import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import '../Home/home_screen_controller.dart';
 import '/ui/utils/theme_controller.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsScreenController extends GetxController {
   late String _supportDir;
@@ -39,14 +40,14 @@ class SettingsScreenController extends GetxController {
   final downloadLocationPath = "".obs;
   final exportLocationPath = "".obs;
   final downloadingFormat = "".obs;
-  final hideDloc = true.obs;
   final autoDownloadFavoriteSongEnabled = false.obs;
   final isTransitionAnimationDisabled = false.obs;
   final isBottomNavBarEnabled = false.obs;
   final backgroundPlayEnabled = true.obs;
+  final keepScreenAwake = false.obs;
   final restorePlaybackSession = false.obs;
   final cacheHomeScreenData = true.obs;
-  final currentVersion = "V1.12.1";
+  final currentVersion = "V1.12.2";
 
   @override
   void onInit() {
@@ -103,6 +104,8 @@ class SettingsScreenController extends GetxController {
         AudioQuality.values[setBox.get('streamingQuality')];
     playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
     backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
+    keepScreenAwake.value =
+        setBox.get("keepScreenAwake") ?? GetPlatform.isDesktop ? true : false;
     final downloadPath =
         setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
     downloadLocationPath.value =
@@ -213,10 +216,6 @@ class SettingsScreenController extends GetxController {
     downloadLocationPath.value = pickedFolderPath;
   }
 
-  void showDownLoc() {
-    hideDloc.value = false;
-  }
-
   void disableTransitionAnimation(bool val) {
     setBox.put('isTransitionAnimationDisabled', val);
     isTransitionAnimationDisabled.value = val;
@@ -296,6 +295,25 @@ class SettingsScreenController extends GetxController {
   void toggleBackgroundPlay(bool val) {
     setBox.put('backgroundPlayEnabled', val);
     backgroundPlayEnabled.value = val;
+  }
+
+  void toggleKeepScreenAwake(bool val) {
+    setBox.put('keepScreenAwake', val);
+    keepScreenAwake.value = val;
+    try {
+        if (val) {
+          // enable wakelock immediately if music is playing
+          if (Get.find<PlayerController>().buttonState.value ==
+              PlayButtonState.playing) {
+            WakelockPlus.enable();
+          }
+        } else {
+          WakelockPlus.disable();
+        }
+     
+    } catch (e) {
+      // ignore if player/controller not available
+    }
   }
 
   Future<void> enableIgnoringBatteryOptimizations() async {

@@ -265,5 +265,14 @@
     "importPlaylist": "Імпортувати список відтворення",
     "importingPlaylist": "Імпортування списку відтворення...",
     "playlistImportedMsg": "Список відтворення успішно імпортовано",
-    "importError": "Помилка імпортування списку відтворення"
+    "importError": "Помилка імпортування списку відтворення",
+    "exportPlaylistCsv": "Експортувати список відтворення у форматі CSV",
+    "exportPlaylistJson": "Експортувати список відтворення в JSON",
+    "exportPlaylistJsonSubtitle": "Цей формат можна імпортувати",
+    "exportPlaylistCsvSubtitle": "Не можна імпортувати сюди",
+    "exportToYouTubeMusic": "Експортувати до Youtube Music",
+    "exportToYouTubeMusicSubtitle": "Це додасть ваш список відтворення (пісень < 50) до поточної черги, не забудьте додати до плейлиста / зберегти після відкриття в YtMusic",
+    "linkCopied": "Посилання скопійовано в буфер обміну",
+    "keepScreenOnWhilePlaying": "Тримати екран увімкненим під час відтворення",
+    "keepScreenOnWhilePlayingDes": "Якщо увімкнено, екран пристрою залишатиметься увімкненим під час відтворення музики"
 }
